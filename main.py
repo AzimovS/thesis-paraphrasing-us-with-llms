@@ -1,9 +1,27 @@
 from langchain_community.llms import Ollama
+from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 import pandas as pd
 import metrics
 
 FILENAME = "Synthetic User Stories.xlsx"
 SHEETNAME = "Dataset"
+
+
+llm = Ollama(model="llama2")
+response_schemas = [
+    ResponseSchema(name="paraphrased", description="paraphrased version to the user's input"),
+]
+output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+format_instructions = output_parser.get_format_instructions()
+prompt = PromptTemplate(
+    template="Paraphrase the user story provided by user.\n{format_instructions}\n{user_story}",
+    input_variables=["user_story"],
+    partial_variables={"format_instructions": format_instructions},
+)
+
+chain = prompt | llm | output_parser
 
 metric_functions = [
     metrics.total_characters,
@@ -23,18 +41,13 @@ metric_functions = [
     metrics.number_of_urls
 ]
 
-llm = Ollama(model="llama2")
 df = pd.read_excel(FILENAME, SHEETNAME)
 df = df[:100]
 
-
 def add_paraphrase_column(x):
-    output = llm.invoke(
-        f'Can you paraphrase the following user story: """{x}"""')
-    output = output.split(':\n\n')[1]
-    if output[0] == '"':
-        return output[1:-1]
-    return output
+    output = chain.invoke({'user_story': x})
+    print(output)
+    return output['paraphrased']
 
 
 df['Paraphrased User Story'] = df['User Story'].apply(add_paraphrase_column)
@@ -44,4 +57,4 @@ for func in metric_functions:
     df['llm_' + func.__name__] = df['Paraphrased User Story'].apply(func)
     df['diff_' + func.__name__] = df['original_' + func.__name__] - df['llm_' + func.__name__]
 
-df.to_csv("new.csv")
+df.to_csv("new.csv", index=False)
