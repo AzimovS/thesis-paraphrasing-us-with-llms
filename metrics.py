@@ -12,30 +12,32 @@ def uppercase_characters(text):
 def lowercase_characters(text):
     return sum(1 for char in text if char.islower())
 
-def special_characters(text):  # to verify
-    return sum(1 for char in text if not char.isalnum() and char != ' ')
+def special_characters(text):
+    special_chars = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+    return sum(1 for char in text if char in special_chars)
 
 def numbers(text):
     return sum(1 for char in text if char.isdigit())
 
-def blanks(text): # to verify (maybe to use .isspace()?)
-    return sum(1 for char in text if char == ' ')
+def blanks(text):
+    return sum(1 for char in text if char.isspace())
 
-def number_of_words(text): # what if (word - word)
+def number_of_words(text):
     return len(text.split())
 
-def average_length_of_words(text): # depends on the previous one
+def average_length_of_words(text):
     words = text.split()
-    if words:
-        return sum(len(word) for word in words) / len(words)
-    else:
+    total_length = sum(len(word) for word in words)
+    num_words = len(words)
+    if num_words == 0:
         return 0
+    return total_length / num_words
 
-def number_of_propositions(text): # I think incorrect
+def number_of_propositions(text):
     propositions = re.split(r'[.!?]+', text)
     return len([prop for prop in propositions if prop.strip()])
 
-def average_length_of_propositions(text): # related to the previous one
+def average_length_of_propositions(text):
     propositions = re.split(r'[.!?]+', text)
     lengths = [len(prop.strip().split()) for prop in propositions if prop.strip()]
     if lengths:
@@ -54,9 +56,11 @@ def uppercase_words(text):
     words = text.split()
     return sum(1 for word in words if word.isupper())
 
-def vocabulary_richness(text): # i guess all words should be converted to he lowercase
-    words = text.split()
-    return len(set(words))
+def vocabulary_richness(text):
+    words = text.lower().split()
+    unique_words = set(words)
+    dw = len(unique_words)
+    return dw
 
 def number_of_urls(text):
     urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
@@ -120,3 +124,40 @@ def number_of_urls(text):
 # print("Uppercase Words:", uppercase_words_count)
 # print("Vocabulary Richness:", vocab_richness)
 # print("URLs:", urls_count)
+
+import pandas as pd
+
+FILENAME = "Synthetic User Stories.xlsx"
+SHEETNAME = "Dataset"
+
+metric_functions = [
+    total_characters,
+    uppercase_characters,
+    lowercase_characters,
+    special_characters,
+    numbers,
+    blanks,
+    number_of_words,
+    average_length_of_words,
+    number_of_propositions,
+    average_length_of_propositions,
+    punctuation_characters,
+    lowercase_words,
+    uppercase_words,
+    vocabulary_richness,
+    number_of_urls
+]
+
+if __name__ == '__main__':
+    print("HI")
+    df = pd.read_excel(FILENAME, SHEETNAME)
+    df = df[:1]
+    sentence = df['User Story'][0]
+    sentence = "- - - - - -"
+    print(sentence)
+
+    for func in metric_functions:
+        # df['original_' + func.__name__] = df['User Story'].apply(func)
+        print(f"{func.__name__}: {func(sentence)}")
+        # df['llm_' + func.__name__] = df['Paraphrased User Story'].apply(func)
+        # df['diff_' + func.__name__] = df['original_' + func.__name__] - df['llm_' + func.__name__]
