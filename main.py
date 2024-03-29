@@ -38,7 +38,15 @@ metric_functions = [
     metrics.lowercase_words,
     metrics.uppercase_words,
     metrics.vocabulary_richness,
-    metrics.number_of_urls
+    metrics.number_of_urls,
+    metrics.flesch_kincaid_grade_level,
+    metrics.flesch_reading_ease,
+    metrics.dale_chall_readability,
+    metrics.automated_readability_index,
+    metrics.coleman_liau_index,
+    metrics.gunning_fog,
+    metrics.smog_index,
+    metrics.linsear_write_index
 ]
 
 df = pd.read_excel(FILENAME, SHEETNAME)
@@ -57,4 +65,4 @@ for func in metric_functions:
     df['llm_' + func.__name__] = df['Paraphrased User Story'].apply(func)
     df['diff_' + func.__name__] = df['original_' + func.__name__] - df['llm_' + func.__name__]
 
-df.to_csv("new.csv", index=False)
+df.to_csv("withparaphrased.csv", index=False)
