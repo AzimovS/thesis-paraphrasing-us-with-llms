@@ -1,8 +1,11 @@
+from itertools import product
 from langchain_community.llms import Ollama
 from langchain.prompts import PromptTemplate
 import pandas as pd
 import metrics
+import itertools
 
+NUM_COMBINATIONS = 2
 OPTIONS = ["increase", "decrease", "don't change"]
 # OPTIONS = ["increase"]
 
@@ -10,10 +13,13 @@ OPTIONS = ["increase", "decrease", "don't change"]
 FILENAME = "Synthetic User Stories.xlsx"
 SHEETNAME = "Dataset"
 
+df = pd.read_excel(FILENAME, SHEETNAME)
+df = df.sample(n=1, random_state=42)
+
 llm = Ollama(model="llama2")
 
 
-metric_to_insutrcions = {
+metric_to_instructions = {
     metrics.total_characters: " number of total characters",
     metrics.uppercase_characters: " number of uppercase characters",
     metrics.lowercase_characters: " number of lowercase characters",
@@ -39,8 +45,10 @@ metric_to_insutrcions = {
     metrics.linsear_write_index: " linsear write index"
 }
 
-df = pd.read_excel(FILENAME, SHEETNAME)
-df = df[:2]
+
+# Generate combinations of keys
+metric_combinations = itertools.combinations(
+    list(metric_to_instructions.keys()), NUM_COMBINATIONS)
 
 
 def eval(user_story, par, metric_func, option):
@@ -55,13 +63,40 @@ def eval(user_story, par, metric_func, option):
         return 1
     return 0
 
+# metric_combinations = [list(comb) for comb in metric_combinations]
+# print(metric_combinations)
 
-for (metric_function, value) in metric_to_insutrcions.items():
-    for option in OPTIONS:
-        print(metric_function.__name__)
-        prompt_instructions = f'{option} {value}'
-        print(prompt_instructions)
 
+list1 = ['f1', 'f2', 'f3']
+list2 = ['o1', 'o2', 'o3']
+
+
+def generate_all_pairs(list1, list2):
+    res = []
+
+    def recursion(cur, index=0):
+        if len(cur) >= len(list1):
+            res.append(cur)
+            return
+        for j in range(len(list2)):
+            recursion(cur + [(list1[index], list2[j])], index + 1)
+
+    recursion([])
+
+    return res
+
+
+all_combinations = []
+for comb in metric_combinations:
+    all_combinations.append(generate_all_pairs(comb, OPTIONS))
+
+for combination in all_combinations:
+    for pairs in combination:
+        prompt_instructions = ""
+        for pair in pairs:
+            if prompt_instructions:
+                prompt_instructions += ", "
+            prompt_instructions += f'{pair[1]} {metric_to_instructions[pair[0]]}'
         prompt = PromptTemplate(
             input_variables=["user_story", "prompt_instructions"],
             template="Based on the following instruction: {prompt_instructions}.  Paraphrase the following user story and output only paraphrased version: \n{user_story}",
@@ -80,8 +115,13 @@ for (metric_function, value) in metric_to_insutrcions.items():
                 paraphrased = "ERROR"
                 print("\nERROR", user_story)
             df.at[index, f"par {prompt_instructions}"] = paraphrased
-            df.at[index, f"res {prompt_instructions}"] = eval(
-                user_story=user_story, par=paraphrased, metric_func=metric_function, option=option)
-
+            final_res = []
+            for pair in pairs:
+                final_res.append(eval(
+                    user_story=user_story, par=paraphrased, metric_func=pair[0], option=pair[1]))
+            print(final_res)
+            df.at[index, f"res {prompt_instructions}"] = 1 if all(
+                final_res) else 0
     df.to_csv("withparaphrased.csv", index=False)
+
     break
