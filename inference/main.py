@@ -4,8 +4,11 @@ from langchain.prompts import PromptTemplate
 import pandas as pd
 import metrics
 import itertools
+import time
 
-NUM_COMBINATIONS = 2
+start_time = time.time()
+
+NUM_COMBINATIONS = 1
 OPTIONS = ["increase", "decrease", "don't change"]
 # OPTIONS = ["increase"]
 
@@ -14,7 +17,7 @@ FILENAME = "Synthetic User Stories.xlsx"
 SHEETNAME = "Dataset"
 
 df = pd.read_excel(FILENAME, SHEETNAME)
-df = df.sample(n=1, random_state=42)
+df = df.sample(n=100, random_state=42)
 
 llm = Ollama(model="llama2")
 
@@ -97,6 +100,7 @@ for combination in all_combinations:
             if prompt_instructions:
                 prompt_instructions += ", "
             prompt_instructions += f'{pair[1]} {metric_to_instructions[pair[0]]}'
+        print(prompt_instructions)
         prompt = PromptTemplate(
             input_variables=["user_story", "prompt_instructions"],
             template="Based on the following instruction: {prompt_instructions}.  Paraphrase the following user story and output only paraphrased version: \n{user_story}",
@@ -124,4 +128,7 @@ for combination in all_combinations:
                 final_res) else 0
     df.to_csv("withparaphrased.csv", index=False)
 
-    break
+end_time = time.time()
+execution_time = end_time - start_time
+
+print("Execution time:", execution_time, "seconds")
