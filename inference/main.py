@@ -19,7 +19,7 @@ SHEETNAME = "Dataset"
 df = pd.read_excel(FILENAME, SHEETNAME)
 df = df.sample(n=100, random_state=42)
 
-llm = Ollama(model="llama2")
+llm = Ollama(model="gemma:7b")
 
 
 metric_to_instructions = {
@@ -69,11 +69,6 @@ def eval(user_story, par, metric_func, option):
 # metric_combinations = [list(comb) for comb in metric_combinations]
 # print(metric_combinations)
 
-
-list1 = ['f1', 'f2', 'f3']
-list2 = ['o1', 'o2', 'o3']
-
-
 def generate_all_pairs(list1, list2):
     res = []
 
@@ -114,7 +109,8 @@ for combination in all_combinations:
                 paraphrased = chain.invoke(
                     {'user_story': user_story, 'prompt_instructions': prompt_instructions})
                 if ":" in paraphrased:
-                    paraphrased = paraphrased.split(":")[1].lstrip()
+                    paraphrased = paraphrased.split(":")[1]
+                paraphrased = paraphrased.lstrip()
             except:
                 paraphrased = "ERROR"
                 print("\nERROR", user_story)
