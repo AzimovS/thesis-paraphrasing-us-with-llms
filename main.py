@@ -50,15 +50,20 @@ metric_functions = [
 ]
 
 df = pd.read_excel(FILENAME, SHEETNAME)
-df = df[:100]
+df = df[6000:]
 
 def add_paraphrase_column(x):
-    output = chain.invoke({'user_story': x})
-    print(output)
-    return output['paraphrased']
+    output = None
+    try: 
+        output = chain.invoke({'user_story': x})['paraphrased']
+    except:
+        output = "ERROR"
+        print("ERROR", x)
+    return output
 
 
 df['Paraphrased User Story'] = df['User Story'].apply(add_paraphrase_column)
+df.to_csv('tmp.csv', index=True)
 
 for func in metric_functions:
     df['original_' + func.__name__] = df['User Story'].apply(func)

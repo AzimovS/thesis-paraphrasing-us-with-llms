@@ -9,16 +9,16 @@ import time
 start_time = time.time()
 
 NUM_COMBINATIONS = 1
-IS_DEFINITION_INCLUDED = True
+IS_DEFINITION_INCLUDED = False
 OPTIONS = ["increase", "decrease", "don't change"]
 
 FILENAME = "Synthetic User Stories.xlsx"
 SHEETNAME = "Dataset"
-
+ 
 df = pd.read_excel(FILENAME, SHEETNAME)
 df = df.sample(n=100, random_state=42)
 
-llm = Ollama(model="llama3")
+llm = Ollama(model="solar")
 
 metric_to_instructions = {
     metrics.total_characters: [" number of total characters", "Total characters typically refers to the count of all individual characters, including letters, numbers, punctuation marks, spaces, and any other symbols, within a given text."],

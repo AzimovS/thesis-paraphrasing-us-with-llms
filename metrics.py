@@ -22,6 +22,7 @@ def blanks(text):
     return sum(1 for char in text if char.isspace())
 
 def number_of_words(text):
+    # print(text)
     return len(text.split())
 
 def average_length_of_words(text):
